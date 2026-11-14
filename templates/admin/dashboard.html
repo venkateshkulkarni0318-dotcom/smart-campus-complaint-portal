@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge, stat_card %}
+
+{% block title %}Admin Overview — Smart Campus Portal{% endblock %}
+{% block page_title %}Campus Maintenance Administration{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <h4 class="fw-bold mb-0">Operations Command Center</h4>
+      <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Administrator</span>
+    </div>
+    <p class="text-muted mb-0">Live campus facility oversight, incident routing, and performance analytics.</p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('admin.complaints') }}" class="btn btn-primary">
+      <i class="bi bi-inbox-fill me-1"></i> Manage All Complaints
+    </a>
+  </div>
+</div>
+
+<!-- 5 Statistics Cards Row -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg">
+    {{ stat_card("Total Reports", stats.total, "collection", "primary") }}
+  </div>
+  <div class="col-sm-6 col-lg">
+    {{ stat_card("Pending Routing", stats.pending, "clock-history", "warning") }}
+  </div>
+  <div class="col-sm-6 col-lg">
+    {{ stat_card("Assigned Staff", stats.assigned, "person-check", "primary") }}
+  </div>
+  <div class="col-sm-6 col-lg">
+    {{ stat_card("Active Repairs", stats.in_progress, "tools", "info") }}
+  </div>
+  <div class="col-sm-6 col-lg">
+    {{ stat_card("Closed Issues", stats.resolved, "check-circle-fill", "success") }}
+  </div>
+</div>
+
+<!-- Analytics Charts (Chart.js) -->
+<div class="row g-4 mb-4">
+  <!-- Status Distribution Donut -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-dark">
+          <i class="bi bi-pie-chart-fill text-primary me-2"></i>Status Distribution
+        </h6>
+      </div>
+      <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+        <div style="position: relative; height: 260px; width: 100%; max-width: 300px;">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Bar Chart -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm border-0 h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-dark">
+          <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Complaints by Category
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div style="position: relative; height: 260px; width: 100%;">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Campus Incidents Table -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
+    <h6 class="mb-0 fw-bold text-dark">
+      <i class="bi bi-clock-history me-2 text-primary"></i>Recent Campus Reports
+    </h6>
+    <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline-primary btn-sm">
+      View All Complaints <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Submitter</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Assigned Department / Staff</th>
+              <th>Date</th>
+              <th class="text-end">Manage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('student.complaint_details', complaint_id=c.complaint_id) }}" class="fw-bold text-decoration-none text-primary">
+                    {{ c.ticket_number or ('CMP-PENDING-' ~ c.complaint_id) }}
+                  </a>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark">{{ c.submitter_name }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ c.category }}</span>
+                </td>
+                <td>
+                  <span class="text-dark">{{ c.building }}</span>
+                  <small class="text-muted d-block">Room {{ c.room }}</small>
+                </td>
+                <td>
+                  {{ priority_badge(c.priority) }}
+                </td>
+                <td>
+                  {{ status_badge(c.status) }}
+                </td>
+                <td>
+                  {% if c.department_name %}
+                    <span class="badge bg-light text-dark border me-1">{{ c.department_name }}</span>
+                    {% if c.staff_name %}
+                      <small class="text-primary fw-medium">{{ c.staff_name }}</small>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-muted">{{ c.created_at.strftime('%d %b, %I:%M %p') if c.created_at else 'N/A' }}</small>
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('admin.complaints', search=c.ticket_number) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-gear"></i> Route
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <p class="text-muted mb-0">No complaints logged in the database yet.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Server-rendered real MySQL aggregates via Jinja2 tojson filter
+  const statusCounts = {{ status_counts | tojson }};
+  const categoryCounts = {{ category_counts | tojson }};
+
+  // Status Donut Chart
+  const ctxStatus = document.getElementById('statusChart').getContext('2d');
+  new Chart(ctxStatus, {
+    type: 'doughnut',
+    data: {
+      labels: ['Pending', 'Assigned', 'In Progress', 'Resolved'],
+      datasets: [{
+        data: [
+          statusCounts['Pending'] || 0,
+          statusCounts['Assigned'] || 0,
+          statusCounts['In Progress'] || 0,
+          statusCounts['Resolved'] || 0
+        ],
+        backgroundColor: ['#D97706', '#2563EB', '#0284C7', '#059669'],
+        borderWidth: 2,
+        borderColor: '#FFFFFF'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 12, font: { size: 11, family: 'Inter' } }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+
+  // Category Bar Chart
+  const catLabels = Object.keys(categoryCounts);
+  const catValues = Object.values(categoryCounts);
+
+  const ctxCategory = document.getElementById('categoryChart').getContext('2d');
+  new Chart(ctxCategory, {
+    type: 'bar',
+    data: {
+      labels: catLabels.length ? catLabels : ['No Data'],
+      datasets: [{
+        label: 'Incidents',
+        data: catValues.length ? catValues : [0],
+        backgroundColor: '#2563EB',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, font: { family: 'Inter' } },
+          grid: { color: '#E2E8F0' }
+        },
+        x: {
+          ticks: { font: { family: 'Inter', size: 11 } },
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+</script>
+{% endblock %}

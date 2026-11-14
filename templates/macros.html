@@ -1,0 +1,56 @@
+{# templates/macros.html - Reusable Jinja2 UI Macros #}
+
+{% macro status_badge(status) %}
+  {% if status == 'Pending' %}
+    <span class="badge-status badge-status-pending">
+      <i class="bi bi-clock-history"></i> Pending
+    </span>
+  {% elif status == 'Assigned' %}
+    <span class="badge-status badge-status-assigned">
+      <i class="bi bi-person-check"></i> Assigned
+    </span>
+  {% elif status == 'In Progress' %}
+    <span class="badge-status badge-status-inprogress">
+      <i class="bi bi-gear-wide-connected"></i> In Progress
+    </span>
+  {% elif status == 'Resolved' %}
+    <span class="badge-status badge-status-resolved">
+      <i class="bi bi-check-circle-fill"></i> Resolved
+    </span>
+  {% else %}
+    <span class="badge bg-secondary">{{ status }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro priority_badge(priority) %}
+  {% if priority == 'High' %}
+    <span class="badge-priority badge-priority-high">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>High
+    </span>
+  {% elif priority == 'Medium' %}
+    <span class="badge-priority badge-priority-medium">
+      <i class="bi bi-dash-circle me-1"></i>Medium
+    </span>
+  {% elif priority == 'Low' %}
+    <span class="badge-priority badge-priority-low">
+      <i class="bi bi-arrow-down-circle me-1"></i>Low
+    </span>
+  {% else %}
+    <span class="badge bg-light text-dark">{{ priority }}</span>
+  {% endif %}
+{% endmacro %}
+
+{% macro stat_card(label, value, icon, color='primary', subtitle=None) %}
+  <div class="card stat-card {{ color }} h-100">
+    <div>
+      <div class="stat-value">{{ value }}</div>
+      <div class="stat-label">{{ label }}</div>
+      {% if subtitle %}
+        <small class="text-muted d-block mt-1">{{ subtitle }}</small>
+      {% endif %}
+    </div>
+    <div class="stat-icon {{ color }}">
+      <i class="bi bi-{{ icon }}"></i>
+    </div>
+  </div>
+{% endmacro %}

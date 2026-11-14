@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge, stat_card %}
+
+{% block title %}Student Dashboard — Smart Campus Portal{% endblock %}
+{% block page_title %}Student Maintenance Dashboard{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <h4 class="fw-bold mb-1">Hello, {{ session.get('user_name') }}!</h4>
+    <p class="text-muted mb-0">Track and report maintenance issues across the campus community.</p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{{ url_for('student.new_complaint') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i> Submit New Complaint
+    </a>
+  </div>
+</div>
+
+<!-- 4 Statistics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Total Submitted", stats.total, "card-checklist", "primary") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Pending Action", stats.pending, "clock-history", "warning") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("In Progress", stats.in_progress, "gear-wide-connected", "info") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Resolved Issues", stats.resolved, "check-circle-fill", "success") }}
+  </div>
+</div>
+
+<!-- Recent Complaints Table -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
+    <h6 class="mb-0 fw-bold text-dark">
+      <i class="bi bi-clock-history me-2 text-primary"></i>My Recent Submissions
+    </h6>
+    <a href="{{ url_for('student.track_complaint') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-search me-1"></i> Track Ticket
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Assigned Dept</th>
+              <th>Submitted On</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('student.complaint_details', complaint_id=c.complaint_id) }}" class="fw-bold text-decoration-none text-primary">
+                    {{ c.ticket_number or ('CMP-PENDING-' ~ c.complaint_id) }}
+                  </a>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark">{{ c.category }}</span>
+                </td>
+                <td>
+                  <span class="text-dark">{{ c.building }}</span>
+                  <small class="text-muted d-block">Room {{ c.room }}{% if c.floor %}, Floor {{ c.floor }}{% endif %}</small>
+                </td>
+                <td>
+                  {{ priority_badge(c.priority) }}
+                </td>
+                <td>
+                  {{ status_badge(c.status) }}
+                </td>
+                <td>
+                  {% if c.department_name %}
+                    <span class="badge bg-light text-dark border">{{ c.department_name }}</span>
+                  {% else %}
+                    <span class="text-muted fst-italic small">Pending Assignment</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-muted">{{ c.created_at.strftime('%d %b %Y, %I:%M %p') if c.created_at else 'Just now' }}</small>
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('student.complaint_details', complaint_id=c.complaint_id) }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-eye"></i> View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <div class="text-muted mb-3">
+          <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+        </div>
+        <h6 class="fw-bold text-dark">No Complaints Reported Yet</h6>
+        <p class="text-muted small mb-3">Notice an issue on campus? Let our maintenance team know.</p>
+        <a href="{{ url_for('student.new_complaint') }}" class="btn btn-primary btn-sm">
+          <i class="bi bi-plus-circle me-1"></i> File First Complaint
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

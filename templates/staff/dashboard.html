@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge, stat_card %}
+
+{% block title %}Technician Dashboard — Smart Campus Portal{% endblock %}
+{% block page_title %}Maintenance Operations Dashboard{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <h4 class="fw-bold mb-0">Technician Workspace</h4>
+      <span class="badge bg-info-subtle text-info border border-info-subtle">Maintenance Staff</span>
+    </div>
+    <p class="text-muted mb-0">Logged in as <strong>{{ session.get('user_name') }}</strong> — Assigned Campus Maintenance Tasks</p>
+  </div>
+</div>
+
+<!-- 4 Statistics Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Total Assigned", stats.total_assigned, "clipboard-check-fill", "primary") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Pending Start", stats.pending_start, "hourglass-split", "warning") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Active In Progress", stats.in_progress, "gear-wide-connected", "info") }}
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    {{ stat_card("Resolved / Closed", stats.resolved, "patch-check-fill", "success") }}
+  </div>
+</div>
+
+<!-- Assigned Tasks Table -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="mb-0 fw-bold text-dark">
+        <i class="bi bi-tools text-primary me-2"></i>My Maintenance Work Orders
+      </h6>
+      <small class="text-muted">{{ tasks|length }} active or historical task(s)</small>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    {% if tasks %}
+      <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Submitter</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Priority</th>
+              <th>Current Status</th>
+              <th>Assigned Date</th>
+              <th class="text-end">Task Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in tasks %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('student.complaint_details', complaint_id=t.complaint_id) }}"
+                     class="fw-bold text-decoration-none text-primary">
+                    {{ t.ticket_number or ('CMP-PENDING-' ~ t.complaint_id) }}
+                  </a>
+                </td>
+                <td>
+                  <span class="fw-medium text-dark">{{ t.submitter_name }}</span>
+                  <small class="text-muted d-block">{{ t.submitter_email }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ t.category }}</span>
+                </td>
+                <td>
+                  <span class="text-dark">{{ t.building }}</span>
+                  <small class="text-muted d-block">Room {{ t.room }}{% if t.floor %}, Floor {{ t.floor }}{% endif %}</small>
+                </td>
+                <td>
+                  {{ priority_badge(t.priority) }}
+                </td>
+                <td>
+                  {{ status_badge(t.status) }}
+                </td>
+                <td>
+                  <small class="text-muted">{{ t.updated_at.strftime('%d %b, %I:%M %p') if t.updated_at else 'N/A' }}</small>
+                </td>
+                <td class="text-end">
+                  <div class="d-flex justify-content-end align-items-center gap-1">
+                    {% if t.status == 'Assigned' %}
+                      <!-- Move to In Progress -->
+                      <form method="POST" action="{{ url_for('staff.update_status', complaint_id=t.complaint_id) }}" class="m-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="new_status" value="In Progress">
+                        <input type="hidden" name="remarks" value="Technician commenced repair operations">
+                        <button type="submit" class="btn btn-info btn-sm text-white" title="Start Task">
+                          <i class="bi bi-play-fill"></i> Start Work
+                        </button>
+                      </form>
+
+                    {% elif t.status == 'In Progress' %}
+                      <!-- Resolve Button (triggers modal) -->
+                      <button type="button" class="btn btn-success btn-sm resolve-trigger"
+                              data-bs-toggle="modal" data-bs-target="#resolveModal"
+                              data-complaint-id="{{ t.complaint_id }}"
+                              data-ticket="{{ t.ticket_number }}"
+                              title="Complete and Resolve">
+                        <i class="bi bi-check-lg"></i> Mark Resolved
+                      </button>
+
+                    {% elif t.status == 'Resolved' %}
+                      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                        <i class="bi bi-check2-all me-1"></i>Completed
+                      </span>
+                    {% endif %}
+
+                    <!-- View Details Link -->
+                    <a href="{{ url_for('student.complaint_details', complaint_id=t.complaint_id) }}"
+                       class="btn btn-outline-secondary btn-sm" title="View Ticket Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <div class="text-muted mb-2">
+          <i class="bi bi-check2-circle" style="font-size: 3rem; color: #10B981;"></i>
+        </div>
+        <h6 class="fw-bold text-dark">No Pending Tasks Assigned</h6>
+        <p class="text-muted small mb-0">You currently have no outstanding maintenance tickets assigned to your queue.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ================= Modal: Resolution Remarks ================= -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-dark" id="resolveModalLabel">
+          <i class="bi bi-check-circle-fill text-success me-2"></i>Complete & Resolve Ticket
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="resolveForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="new_status" value="Resolved">
+
+        <div class="modal-body p-4">
+          <div class="alert alert-success py-2 small mb-3">
+            Closing Ticket: <strong id="resolveTicket">CMP-YYYY-XXXX</strong>
+          </div>
+
+          <div class="mb-3">
+            <label for="resolutionRemarks" class="form-label fw-semibold">
+              Resolution Remarks <span class="text-danger">*</span>
+            </label>
+            <textarea class="form-control" id="resolutionRemarks" name="remarks" rows="4"
+                      placeholder="Explain what repairs were conducted (e.g. Replaced capacitor on ceiling fan, tightened water pipe joints)..."
+                      required minlength="5"></textarea>
+            <div class="form-text text-muted small">
+              This summary will be visible to the student/faculty submitter and campus administration.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success px-4">
+            <i class="bi bi-check-circle me-1"></i> Submit & Mark Resolved
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const resolveTriggers = document.querySelectorAll('.resolve-trigger');
+  const resolveForm = document.getElementById('resolveForm');
+  const resolveTicket = document.getElementById('resolveTicket');
+
+  resolveTriggers.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const complaintId = this.dataset.complaintId;
+      const ticket = this.dataset.ticket;
+      resolveForm.action = `/staff/complaints/${complaintId}/status`;
+      resolveTicket.textContent = ticket || `ID #${complaintId}`;
+    });
+  });
+</script>
+{% endblock %}

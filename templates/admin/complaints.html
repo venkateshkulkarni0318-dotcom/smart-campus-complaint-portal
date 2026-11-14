@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge %}
+
+{% block title %}Complaint Management — Admin Portal{% endblock %}
+{% block page_title %}Campus Complaint Management & Routing{% endblock %}
+
+{% block content %}
+<!-- Search & Filter Card -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-body p-3 p-md-4">
+    <form method="GET" action="{{ url_for('admin.complaints') }}" class="row g-2 align-items-end">
+      
+      <!-- Search Input -->
+      <div class="col-md-3">
+        <label class="form-label small text-muted text-uppercase fw-semibold mb-1">Search Keywords</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control form-control-sm" name="search"
+                 placeholder="Ticket #, room, description..." value="{{ search_query or '' }}">
+        </div>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="col-md-2 col-sm-6">
+        <label class="form-label small text-muted text-uppercase fw-semibold mb-1">Status</label>
+        <select class="form-select form-select-sm" name="status">
+          <option value="">All Statuses</option>
+          <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+          <option value="Assigned" {% if selected_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+          <option value="In Progress" {% if selected_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if selected_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+        </select>
+      </div>
+
+      <!-- Priority Filter -->
+      <div class="col-md-2 col-sm-6">
+        <label class="form-label small text-muted text-uppercase fw-semibold mb-1">Priority</label>
+        <select class="form-select form-select-sm" name="priority">
+          <option value="">All Priorities</option>
+          <option value="Low" {% if selected_priority == 'Low' %}selected{% endif %}>Low</option>
+          <option value="Medium" {% if selected_priority == 'Medium' %}selected{% endif %}>Medium</option>
+          <option value="High" {% if selected_priority == 'High' %}selected{% endif %}>High</option>
+        </select>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="col-md-2 col-sm-6">
+        <label class="form-label small text-muted text-uppercase fw-semibold mb-1">Category</label>
+        <select class="form-select form-select-sm" name="category">
+          <option value="">All Categories</option>
+          <option value="Electrical" {% if selected_category == 'Electrical' %}selected{% endif %}>Electrical</option>
+          <option value="Plumbing" {% if selected_category == 'Plumbing' %}selected{% endif %}>Plumbing</option>
+          <option value="Infrastructure" {% if selected_category == 'Infrastructure' %}selected{% endif %}>Infrastructure</option>
+          <option value="Sanitation" {% if selected_category == 'Sanitation' %}selected{% endif %}>Sanitation</option>
+          <option value="Classroom Equipment" {% if selected_category == 'Classroom Equipment' %}selected{% endif %}>Classroom Equipment</option>
+          <option value="Other" {% if selected_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+
+      <!-- Department Filter -->
+      <div class="col-md-2 col-sm-6">
+        <label class="form-label small text-muted text-uppercase fw-semibold mb-1">Department</label>
+        <select class="form-select form-select-sm" name="department_id">
+          <option value="">All Departments</option>
+          {% for dept in departments %}
+            <option value="{{ dept.department_id }}" {% if selected_dept|string == dept.department_id|string %}selected{% endif %}>
+              {{ dept.department_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-grow-1" title="Apply Filters">
+          <i class="bi bi-funnel-fill"></i> Filter
+        </button>
+        <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline-secondary btn-sm" title="Reset Filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Complaints Data Table -->
+<div class="card shadow-sm border-0">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <div>
+      <h6 class="mb-0 fw-bold text-dark">
+        <i class="bi bi-table text-primary me-2"></i>Campus Complaints Directory
+      </h6>
+      <small class="text-muted">{{ complaints|length }} record(s) found</small>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Submitter</th>
+              <th>Category</th>
+              <th>Location</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Assigned Unit / Staff</th>
+              <th>Date</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('student.complaint_details', complaint_id=c.complaint_id) }}"
+                     class="fw-bold text-decoration-none text-primary">
+                    {{ c.ticket_number or ('CMP-PENDING-' ~ c.complaint_id) }}
+                  </a>
+                </td>
+                <td>
+                  <div class="fw-medium text-dark">{{ c.submitter_name }}</div>
+                  <small class="badge bg-secondary-subtle text-secondary text-capitalize">{{ c.submitter_role }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ c.category }}</span>
+                </td>
+                <td>
+                  <span class="text-dark">{{ c.building }}</span>
+                  <small class="text-muted d-block">Room {{ c.room }}</small>
+                </td>
+                <td>
+                  <!-- Interactive Priority Modal Trigger or Badge -->
+                  {{ priority_badge(c.priority) }}
+                </td>
+                <td>
+                  {{ status_badge(c.status) }}
+                </td>
+                <td>
+                  {% if c.department_name %}
+                    <span class="badge bg-light text-dark border d-block mb-1 text-truncate" style="max-width: 140px;">
+                      {{ c.department_name }}
+                    </span>
+                    {% if c.staff_name %}
+                      <small class="text-primary fw-medium d-block">
+                        <i class="bi bi-person-fill"></i> {{ c.staff_name }}
+                      </small>
+                    {% else %}
+                      <small class="text-warning fst-italic">No Staff Assigned</small>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis">Unassigned</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <small class="text-muted">{{ c.created_at.strftime('%d %b, %I:%M %p') if c.created_at else 'N/A' }}</small>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <!-- Assign Button (triggers modal) -->
+                    <button type="button" class="btn btn-outline-primary btn-sm assign-trigger"
+                            data-bs-toggle="modal" data-bs-target="#assignModal"
+                            data-complaint-id="{{ c.complaint_id }}"
+                            data-ticket="{{ c.ticket_number }}"
+                            data-current-dept="{{ c.department_id or '' }}"
+                            data-current-staff="{{ c.assigned_staff_id or '' }}"
+                            data-current-priority="{{ c.priority }}"
+                            title="Assign Department & Staff">
+                      <i class="bi bi-person-gear"></i> Assign
+                    </button>
+                    <!-- View Details Button -->
+                    <a href="{{ url_for('student.complaint_details', complaint_id=c.complaint_id) }}"
+                       class="btn btn-outline-secondary btn-sm" title="View Full Details">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <div class="text-muted mb-2">
+          <i class="bi bi-funnel" style="font-size: 2.5rem;"></i>
+        </div>
+        <h6 class="fw-bold text-dark">No Matching Complaints Found</h6>
+        <p class="text-muted small mb-0">Try clearing filters or adjusting your search term.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ================= Modal: Staff Assignment ================= -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-dark" id="assignModalLabel">
+          <i class="bi bi-shield-check text-primary me-2"></i>Assign Incident
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="assignForm" method="POST" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body p-4">
+          <div class="alert alert-info py-2 small mb-3">
+            Routing Ticket: <strong id="modalTicket">CMP-YYYY-XXXX</strong>
+          </div>
+
+          <!-- Department Selection -->
+          <div class="mb-3">
+            <label for="modalDept" class="form-label fw-semibold">
+              Maintenance Department <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="modalDept" name="department_id" required>
+              <option value="" disabled selected>Choose department...</option>
+              {% for d in departments %}
+                <option value="{{ d.department_id }}">{{ d.department_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Staff Member Selection -->
+          <div class="mb-3">
+            <label for="modalStaff" class="form-label fw-semibold">
+              Assigned Staff Member <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="modalStaff" name="assigned_staff_id" required>
+              <option value="" disabled selected>Select a technician...</option>
+              {% for s in staff_members %}
+                <option value="{{ s.user_id }}" data-dept="{{ s.department_id or '' }}">
+                  {{ s.name }} ({{ s.email }})
+                </option>
+              {% endfor %}
+            </select>
+            <div class="form-text text-muted small">
+              <i class="bi bi-info-circle me-1"></i>List automatically filters staff belonging to the chosen department.
+            </div>
+          </div>
+
+          <!-- Priority Level -->
+          <div class="mb-3">
+            <label for="modalPriority" class="form-label fw-semibold">Priority Level</label>
+            <select class="form-select" id="modalPriority" name="priority">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check2-circle me-1"></i> Confirm & Assign
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Dynamic Modal Population and Client-Side Filter UX
+  const assignTriggers = document.querySelectorAll('.assign-trigger');
+  const assignForm = document.getElementById('assignForm');
+  const modalTicket = document.getElementById('modalTicket');
+  const modalDept = document.getElementById('modalDept');
+  const modalStaff = document.getElementById('modalStaff');
+  const modalPriority = document.getElementById('modalPriority');
+
+  // Keep reference to all staff options
+  const allStaffOptions = Array.from(modalStaff.querySelectorAll('option:not([disabled])'));
+
+  function filterStaffByDept(deptId) {
+    modalStaff.innerHTML = '<option value="" disabled selected>Select a technician...</option>';
+    let matched = 0;
+    allStaffOptions.forEach(opt => {
+      if (!deptId || opt.dataset.dept === String(deptId)) {
+        modalStaff.appendChild(opt.cloneNode(true));
+        matched++;
+      }
+    });
+    if (matched === 0) {
+      const emptyOpt = document.createElement('option');
+      emptyOpt.disabled = true;
+      emptyOpt.textContent = 'No staff currently registered for this department';
+      modalStaff.appendChild(emptyOpt);
+    }
+  }
+
+  modalDept.addEventListener('change', function() {
+    filterStaffByDept(this.value);
+  });
+
+  assignTriggers.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const complaintId = this.dataset.complaintId;
+      const ticket = this.dataset.ticket;
+      const deptId = this.dataset.currentDept;
+      const staffId = this.dataset.currentStaff;
+      const priority = this.dataset.currentPriority;
+
+      // Update form action URL
+      assignForm.action = `/admin/complaints/${complaintId}/assign`;
+      modalTicket.textContent = ticket || `ID #${complaintId}`;
+
+      // Set department and trigger filter
+      if (deptId) {
+        modalDept.value = deptId;
+        filterStaffByDept(deptId);
+        if (staffId) {
+          modalStaff.value = staffId;
+        }
+      } else {
+        modalDept.selectedIndex = 0;
+        filterStaffByDept('');
+      }
+
+      // Set priority
+      if (priority) {
+        modalPriority.value = priority;
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge %}
+
+{% block title %}Track Ticket — Smart Campus Portal{% endblock %}
+{% block page_title %}Ticket Status Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <!-- Search Box Card -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-4">
+        <h5 class="fw-bold text-dark mb-1">
+          <i class="bi bi-search text-primary me-2"></i>Track Complaint Status
+        </h5>
+        <p class="text-muted small mb-3">Enter your unique ticket number to view live progress and technician assignment.</p>
+
+        <form method="GET" action="{{ url_for('student.track_complaint') }}">
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">
+              <i class="bi bi-ticket-detailed"></i>
+            </span>
+            <input type="text" class="form-control" name="ticket" placeholder="e.g. CMP-2026-0001"
+                   value="{{ searched_ticket or '' }}" required autofocus>
+            <button type="submit" class="btn btn-primary px-4">
+              Track
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Result Card -->
+    {% if complaint %}
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="badge bg-primary-subtle text-primary me-2">{{ complaint.ticket_number }}</span>
+            <span class="fw-bold text-dark">{{ complaint.category }} Issue</span>
+          </div>
+          <div>
+            {{ status_badge(complaint.status) }}
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="text-muted small text-uppercase fw-semibold d-block">Location</label>
+              <div class="fw-medium text-dark">
+                {{ complaint.building }} — Room {{ complaint.room }}
+                {% if complaint.floor %}({{ complaint.floor }}){% endif %}
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="text-muted small text-uppercase fw-semibold d-block">Priority</label>
+              <div>{{ priority_badge(complaint.priority) }}</div>
+            </div>
+            <div class="col-md-3">
+              <label class="text-muted small text-uppercase fw-semibold d-block">Filing Date</label>
+              <div class="small text-dark">{{ complaint.created_at.strftime('%d %b %Y, %I:%M %p') if complaint.created_at else 'N/A' }}</div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="text-muted small text-uppercase fw-semibold d-block">Description</label>
+            <div class="p-3 bg-light rounded text-dark">{{ complaint.description }}</div>
+          </div>
+
+          <!-- Assignment & Resolution Information -->
+          <div class="row g-3 p-3 bg-light rounded mb-4">
+            <div class="col-md-6">
+              <label class="text-muted small text-uppercase fw-semibold d-block">Assigned Department</label>
+              <div class="fw-bold text-dark">
+                {{ complaint.department_name or 'Pending Administrative Assignment' }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="text-muted small text-uppercase fw-semibold d-block">Assigned Technician</label>
+              <div class="fw-bold text-dark">
+                {{ complaint.staff_name or 'Unassigned' }}
+              </div>
+            </div>
+          </div>
+
+          {% if complaint.resolution_remarks %}
+            <div class="alert alert-success d-flex align-items-start gap-2 mb-4">
+              <i class="bi bi-check-circle-fill fs-5 mt-1"></i>
+              <div>
+                <strong class="d-block">Resolution Remarks:</strong>
+                <span>{{ complaint.resolution_remarks }}</span>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="text-end">
+            <a href="{{ url_for('student.complaint_details', complaint_id=complaint.complaint_id) }}" class="btn btn-navy btn-sm">
+              <i class="bi bi-clock-history me-1"></i> View Full Timeline & History
+            </a>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

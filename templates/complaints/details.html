@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge %}
+
+{% block title %}Ticket {{ complaint.ticket_number }} Details — Smart Campus{% endblock %}
+{% block page_title %}Complaint Overview & Timeline{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('admin.complaints') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Complaints Management
+    </a>
+  {% elif session.get('role') == 'staff' %}
+    <a href="{{ url_for('staff.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Assigned Tasks
+    </a>
+  {% elif session.get('role') == 'faculty' %}
+    <a href="{{ url_for('student.faculty_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Faculty Dashboard
+    </a>
+  {% else %}
+    <a href="{{ url_for('student.student_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Complaint Specifics -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div>
+          <span class="fs-5 fw-bold text-primary">{{ complaint.ticket_number or ('CMP-PENDING-' ~ complaint.complaint_id) }}</span>
+          <span class="ms-2 badge bg-light text-dark border">{{ complaint.category }}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          {{ priority_badge(complaint.priority) }}
+          {{ status_badge(complaint.status) }}
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <!-- Submitter Details -->
+        <div class="d-flex align-items-center gap-3 p-3 bg-light rounded mb-4">
+          <div class="user-avatar" style="width: 44px; height: 44px;">
+            {{ complaint.submitter_name[:1]|upper }}
+          </div>
+          <div>
+            <div class="fw-bold text-dark">{{ complaint.submitter_name }}</div>
+            <small class="text-muted">{{ complaint.submitter_email }}</small>
+          </div>
+          <div class="ms-auto text-end">
+            <small class="text-muted d-block">Reported On</small>
+            <span class="small fw-medium text-dark">{{ complaint.created_at.strftime('%d %b %Y, %I:%M %p') if complaint.created_at else 'N/A' }}</span>
+          </div>
+        </div>
+
+        <!-- Location Information -->
+        <h6 class="fw-bold text-dark mb-2">Location Information</h6>
+        <div class="row g-3 p-3 border rounded mb-4">
+          <div class="col-sm-5">
+            <span class="text-muted small text-uppercase fw-semibold d-block">Building / Block</span>
+            <span class="fw-medium text-dark">{{ complaint.building }}</span>
+          </div>
+          <div class="col-sm-3">
+            <span class="text-muted small text-uppercase fw-semibold d-block">Floor</span>
+            <span class="fw-medium text-dark">{{ complaint.floor or 'Ground' }}</span>
+          </div>
+          <div class="col-sm-4">
+            <span class="text-muted small text-uppercase fw-semibold d-block">Room / Area</span>
+            <span class="fw-medium text-dark">{{ complaint.room }}</span>
+          </div>
+        </div>
+
+        <!-- Issue Description -->
+        <h6 class="fw-bold text-dark mb-2">Issue Description</h6>
+        <div class="p-3 bg-light rounded text-dark mb-4" style="line-height: 1.6;">
+          {{ complaint.description }}
+        </div>
+
+        <!-- Department and Staff Assignment Info -->
+        <h6 class="fw-bold text-dark mb-2">Operational Assignment</h6>
+        <div class="row g-3 p-3 border rounded mb-4">
+          <div class="col-sm-6">
+            <span class="text-muted small text-uppercase fw-semibold d-block">Assigned Department</span>
+            <span class="fw-bold text-dark">
+              {% if complaint.department_name %}
+                <i class="bi bi-building text-primary me-1"></i>{{ complaint.department_name }}
+              {% else %}
+                <span class="text-muted fst-italic">Pending Department Assignment</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small text-uppercase fw-semibold d-block">Assigned Staff Member</span>
+            <span class="fw-bold text-dark">
+              {% if complaint.staff_name %}
+                <i class="bi bi-person-badge text-primary me-1"></i>{{ complaint.staff_name }}
+              {% else %}
+                <span class="text-muted fst-italic">Unassigned</span>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Resolution Remarks (if resolved) -->
+        {% if complaint.resolution_remarks %}
+          <div class="alert alert-success d-flex align-items-start gap-3 mb-0">
+            <i class="bi bi-check-circle-fill fs-4 text-success mt-1"></i>
+            <div>
+              <h6 class="alert-heading fw-bold mb-1">Official Resolution Remarks</h6>
+              <p class="mb-0 small">{{ complaint.resolution_remarks }}</p>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Audit History Timeline -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold text-dark">
+          <i class="bi bi-clock-history text-primary me-2"></i>Status History & Audit Trail
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        {% if history %}
+          <ul class="timeline">
+            {% for h in history %}
+              <li class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                      {% if h.old_status %}
+                        <span class="badge bg-light text-dark border small">{{ h.old_status }}</span>
+                        <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                      {% endif %}
+                      {{ status_badge(h.new_status) }}
+                    </div>
+                  </div>
+                  <div class="timeline-date mb-2">
+                    <i class="bi bi-clock me-1"></i>
+                    {{ h.created_at.strftime('%d %b %Y at %I:%M %p') if h.created_at else 'Timestamp unavailable' }}
+                  </div>
+                  {% if h.remarks %}
+                    <p class="small text-dark mb-1">
+                      {{ h.remarks }}
+                    </p>
+                  {% endif %}
+                  <small class="text-muted d-block">
+                    Recorded by <strong class="text-dark">{{ h.updated_by_name }}</strong> ({{ h.updated_by_role }})
+                  </small>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted small mb-0">No history records logged yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

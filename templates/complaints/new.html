@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Complaint — Smart Campus Portal{% endblock %}
+{% block page_title %}Report Maintenance Issue{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3">
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle bg-primary-subtle p-2 text-primary">
+            <i class="bi bi-pencil-square fs-5"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 fw-bold text-dark">Complaint Submission Form</h5>
+            <small class="text-muted">Fill out the details below so our facilities team can resolve the issue promptly.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('student.new_complaint') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Category -->
+          <div class="mb-3">
+            <label for="category" class="form-label">
+              Complaint Category <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="category" name="category" required>
+              <option value="" disabled {% if not form_data or not form_data.category %}selected{% endif %}>
+                Choose facility category...
+              </option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if form_data and form_data.category == cat %}selected{% endif %}>
+                  {{ cat }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label for="description" class="form-label">
+              Issue Description <span class="text-danger">*</span>
+            </label>
+            <textarea class="form-control" id="description" name="description" rows="4"
+                      placeholder="Describe the problem clearly (e.g. Broken ceiling fan causing noise, leaking faucet under the sink)..."
+                      required minlength="10" maxlength="2000">{% if form_data %}{{ form_data.description }}{% endif %}</textarea>
+            <div class="form-text text-muted">Provide adequate detail to help maintenance staff prepare the required tools.</div>
+          </div>
+
+          <!-- Location Row -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-5">
+              <label for="building" class="form-label">
+                Building / Block <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="building" name="building"
+                     placeholder="e.g. Science Block A, Library"
+                     value="{% if form_data %}{{ form_data.building }}{% endif %}" required>
+            </div>
+            <div class="col-md-3">
+              <label for="floor" class="form-label">Floor</label>
+              <input type="text" class="form-control" id="floor" name="floor"
+                     placeholder="e.g. 2nd Floor, Ground"
+                     value="{% if form_data %}{{ form_data.floor }}{% endif %}">
+            </div>
+            <div class="col-md-4">
+              <label for="room" class="form-label">
+                Room / Area <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="room" name="room"
+                     placeholder="e.g. Lab 204, Restroom 3"
+                     value="{% if form_data %}{{ form_data.room }}{% endif %}" required>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+            <a href="{{ url_for('student.student_dashboard') if session.get('role') == 'student' else url_for('student.faculty_dashboard') }}"
+               class="btn btn-outline-secondary px-4">
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-send-fill me-1"></i> Submit Complaint
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
