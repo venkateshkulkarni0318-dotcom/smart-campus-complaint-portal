@@ -4,13 +4,14 @@ Maintenance staff routes: task dashboard and status lifecycle transitions.
 """
 
 import os
+import secrets
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort, current_app
 from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 from utils.auth import role_required
 from utils.db import get_db
-from utils.validators import ALLOWED_TRANSITIONS
+from utils.validators import ALLOWED_TRANSITIONS, validate_image_content
 
 staff_bp = Blueprint('staff', __name__)
 
@@ -101,20 +102,47 @@ def update_status(complaint_id):
             flash('Resolution remarks are required when marking a complaint as Resolved.', 'danger')
             return redirect(url_for('staff.dashboard'))
 
-        # Handle Resolution Evidence Photo Upload (PRD Section 15 Enhancement)
+        # Handle Resolution Evidence Photo Upload with deep content & MIME inspection
         evidence_filename = None
         if new_status == 'Resolved' and 'evidence_image' in request.files:
             file = request.files['evidence_image']
             if file and file.filename:
-                ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-                allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'webp'})
-                if ext in allowed:
+                # 1. Content & Size Validation using Magic Bytes
+                max_bytes = current_app.config.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024)
+                is_valid_img, detected_ext_or_err = validate_image_content(file.stream, max_size=max_bytes)
+
+                # 2. MIME type verification
+                allowed_mimes = current_app.config.get(
+                    'ALLOWED_MIME_TYPES',
+                    {'image/png', 'image/jpeg', 'image/webp'}
+                )
+                is_mime_valid = (file.mimetype or '').lower() in allowed_mimes
+
+                if is_valid_img and is_mime_valid:
+                    # 3. Collision-resistant, safe filename using server-detected extension
                     timestamp = int(datetime.now().timestamp())
-                    evidence_filename = f"evidence_{complaint_id}_{timestamp}.{ext}"
-                    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], evidence_filename)
-                    file.save(upload_path)
+                    entropy = secrets.token_hex(6)
+                    evidence_filename = secure_filename(
+                        f"evidence_{complaint_id}_{timestamp}_{entropy}.{detected_ext_or_err}"
+                    )
+
+                    # 4. Strict Path Traversal Prevention
+                    upload_folder = os.path.abspath(current_app.config['UPLOAD_FOLDER'])
+                    os.makedirs(upload_folder, exist_ok=True)
+                    upload_path = os.path.abspath(os.path.join(upload_folder, evidence_filename))
+
+                    if not upload_path.startswith(upload_folder):
+                        flash('Security violation: Invalid upload directory destination.', 'danger')
+                        evidence_filename = None
+                    else:
+                        try:
+                            file.save(upload_path)
+                        except Exception as save_err:
+                            flash(f"Failed to persist evidence photo: {str(save_err)}", 'warning')
+                            evidence_filename = None
                 else:
-                    flash('Invalid image format. Allowed formats: PNG, JPG, JPEG, WEBP.', 'warning')
+                    reason = detected_ext_or_err if not is_valid_img else "MIME type mismatch"
+                    flash(f'Evidence photo rejected: {reason}. Only valid PNG, JPEG, and WebP images under 5MB are accepted.', 'warning')
 
         # Update complaint record
         if new_status == 'Resolved':

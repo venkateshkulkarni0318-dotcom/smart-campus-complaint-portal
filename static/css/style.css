@@ -521,14 +521,27 @@ body {
   }
 }
 
-/* Print Optimization (PRD Section 15 Enhancement) */
+/* Print Optimization (Official Maintenance Record Format) */
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm;
+}
+
 @media print {
-  .sidebar, .topbar, .btn, .flash-container, .btn-close {
+  body {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .sidebar, .topbar, .btn, .flash-container, .btn-close, nav {
     display: none !important;
   }
   .main-wrapper {
     margin-left: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
   }
   .page-content {
     padding: 0 !important;
@@ -537,6 +550,21 @@ body {
     border: 1px solid #CBD5E1 !important;
     box-shadow: none !important;
     break-inside: avoid;
+    margin-bottom: 12px !important;
+  }
+  .card-header {
+    background-color: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+  }
+  .timeline {
+    break-inside: avoid;
+  }
+  .alert {
+    border: 1px solid #86EFAC !important;
+    background-color: #F0FDF4 !important;
+  }
+  a[href]:after {
+    content: none !important;
   }
 }
 

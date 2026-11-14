@@ -113,22 +113,36 @@ When judges ask about architecture or security, highlight these 7 key engineerin
 
 ## 4. Test Suite Execution Proof
 
-Run all 38 automated tests across the project:
+Run all 40 automated tests across the project:
 ```bash
 python -m unittest discover -s tests
 ```
 Output:
 ```text
-Ran 38 tests in 16.673s
+Ran 40 tests in 7.223s
 
 OK (100% Passing - 0 failures, 0 errors)
-- Phase 1 (Database Connection, Schema & Seed): 6 tests
-- Phase 2 (Auth, Student & Faculty Workflows):  13 tests
-- Phase 3 (Admin, Staff & State Machine):       13 tests
-- Phase 4 (Full E2E Demo Lifecycle):            1 test
-- Phase 5 (PRD Section 15 Enhancements):        4 tests
-- Phase 7 (Evidence Photo Upload & Tracking):   1 test
+- Phase 1 (Database Connection, Schema & Seed):  6 tests
+- Phase 2 (Auth, Priority, Open Redirect & Sub): 14 tests
+- Phase 3 (Admin, Staff & State Machine):        13 tests
+- Phase 4 (Full E2E Demo Lifecycle):             1 test
+- Phase 5 (PRD Section 15 Enhancements):         4 tests
+- Phase 7 (Photo Upload & Malicious Rejection):  2 tests
 ```
+
+### Local Test-Client Performance Benchmark
+Run the comprehensive performance verification script:
+```bash
+python scripts/performance_audit.py
+```
+*Note: Measures local in-memory Flask test-client execution latency via `time.perf_counter()`, excluding network transport delay.*
+Results:
+- Total Features Audited: 29 / 29 (**100% Passing**)
+- Average Test-Client Time: ~54.5 ms
+- Under 20 ms: 19 tests (65.5%)
+- 20–under 50 ms: 8 tests (27.6%)
+- 50–under 100 ms: 0 tests (0.0%)
+- 100 ms and above: 2 tests (6.9% — password hashing key stretching per OWASP recommendations)
 
 ---
 

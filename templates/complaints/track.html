@@ -108,10 +108,20 @@
             </div>
           {% endif %}
 
-          <div class="text-end">
-            <a href="{{ url_for('student.complaint_details', complaint_id=complaint.complaint_id) }}" class="btn btn-navy btn-sm">
-              <i class="bi bi-clock-history me-1"></i> View Full Timeline & History
-            </a>
+          <div class="text-end pt-2 border-top">
+            {% if is_owner %}
+              <a href="{{ url_for('student.complaint_details', complaint_id=complaint.complaint_id) }}" class="btn btn-navy btn-sm">
+                <i class="bi bi-clock-history me-1"></i> View Full Timeline & History
+              </a>
+            {% elif session.get('user_id') %}
+              <span class="text-muted small fst-italic">
+                <i class="bi bi-shield-lock me-1"></i>Full chronological audit history is restricted to the complaint submitter and campus administrators.
+              </span>
+            {% else %}
+              <a href="{{ url_for('auth.login', next=url_for('student.track_complaint', ticket=complaint.ticket_number)) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to View Detailed Submitter Audit
+              </a>
+            {% endif %}
           </div>
         </div>
       </div>

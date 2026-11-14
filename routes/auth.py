@@ -6,6 +6,7 @@ Authentication routes: login, registration, and logout.
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import check_password_hash, generate_password_hash
 from utils.db import get_db
+from utils.auth import is_safe_redirect_url
 from utils.validators import ALLOWED_PUBLIC_ROLES
 
 auth_bp = Blueprint('auth', __name__)
@@ -48,9 +49,9 @@ def login():
 
             flash(f"Welcome back, {user['name']}!", 'success')
 
-            # Role-based redirection
+            # Safe redirection avoiding open redirect vulnerabilities
             next_url = request.args.get('next')
-            if next_url and next_url.startswith('/'):
+            if next_url and is_safe_redirect_url(next_url):
                 return redirect(next_url)
 
             if user['role'] == 'admin':

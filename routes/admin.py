@@ -113,7 +113,7 @@ def complaints():
     priority = request.args.get('priority', '').strip()
     category = request.args.get('category', '').strip()
     dept_id = request.args.get('department_id', '').strip()
-    search = request.args.get('search', '').strip()
+    search = (request.args.get('search') or request.args.get('q') or '').strip()
 
     query = """
         SELECT c.*, u.name AS submitter_name, u.role AS submitter_role,

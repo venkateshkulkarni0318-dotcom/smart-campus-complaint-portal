@@ -19,3 +19,7 @@ instance/
 .idea/
 *.log
 
+# Uploaded Evidence Photos
+static/uploads/*
+!static/uploads/.gitkeep
+

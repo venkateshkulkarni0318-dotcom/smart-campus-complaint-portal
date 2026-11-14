@@ -94,10 +94,17 @@ python database/seed.py
 
 ### Step 6: Run Automated Tests
 ```bash
-python -m unittest tests/test_phase1.py
+python -m unittest discover -s tests
 ```
+*Executes all 40 automated tests across authentication, complaint lifecycle, staff assignment, photo upload security, and PRD §15 enhancements.*
 
-### Step 7: Launch the Application
+### Step 7: Run Local Performance Audit
+```bash
+python scripts/performance_audit.py
+```
+*Measures local in-memory Flask test-client execution response times across all 29 system operations.*
+
+### Step 8: Launch the Application
 ```bash
 python app.py
 ```
@@ -147,6 +154,10 @@ All passwords are encrypted with `pbkdf2:sha256` password hashes.
    - Automatically pre-fills facility and location fields when students scan a campus room or equipment QR sticker.
 3. **In-App Activity & Resolution Alerts**:
    - Prominent notification alert rendered on Student & Faculty dashboards immediately notifying them when a ticket is updated or marked resolved.
-4. **Printable / Exportable Ticket View**:
-   - Print optimization (`@media print`) on complaint details page formatting clean A4 records while stripping navigation and action bars.
+4. **Browser Printing & Save as PDF**:
+   - Print optimization (`@media print`) on complaint details page formatting clean A4 records while stripping navigation and action bars for clean printout or saving as PDF via browser print preview.
+5. **Resolution Evidence Photo Upload & Deep Validation**:
+   - Maintenance technicians can attach photographic proof of repairs upon ticket resolution.
+   - Enforces deep binary magic byte verification (PNG, JPEG, WebP), size limit (5MB), MIME verification, and path traversal prevention.
+   - Verified image preview rendered on both private complaint details and public tracking views.
 

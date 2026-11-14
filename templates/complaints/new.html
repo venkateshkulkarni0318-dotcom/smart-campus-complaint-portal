@@ -48,21 +48,35 @@
         <form method="POST" action="{{ url_for('student.new_complaint') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-          <!-- Category -->
-          <div class="mb-3">
-            <label for="category" class="form-label">
-              Complaint Category <span class="text-danger">*</span>
-            </label>
-            <select class="form-select" id="category" name="category" required>
-              <option value="" disabled {% if not form_data or not form_data.category %}selected{% endif %}>
-                Choose facility category...
-              </option>
-              {% for cat in categories %}
-                <option value="{{ cat }}" {% if form_data and form_data.category == cat %}selected{% endif %}>
-                  {{ cat }}
+          <!-- Category & Priority Row -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-7">
+              <label for="category" class="form-label">
+                Complaint Category <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="category" name="category" required>
+                <option value="" disabled {% if not form_data or not form_data.category %}selected{% endif %}>
+                  Choose facility category...
                 </option>
-              {% endfor %}
-            </select>
+                {% for cat in categories %}
+                  <option value="{{ cat }}" {% if form_data and form_data.category == cat %}selected{% endif %}>
+                    {{ cat }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label for="priority" class="form-label">
+                Urgency / Priority <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="priority" name="priority" required>
+                {% for prio in priorities %}
+                  <option value="{{ prio }}" {% if (form_data and form_data.priority == prio) or (not form_data and prio == 'Medium') %}selected{% endif %}>
+                    {{ prio }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
 
           <!-- Description -->

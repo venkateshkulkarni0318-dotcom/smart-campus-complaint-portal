@@ -117,17 +117,19 @@ def faculty_dashboard():
 def new_complaint():
     if request.method == 'POST':
         category = request.form.get('category', '').strip()
+        priority = request.form.get('priority', 'Medium').strip()
         description = request.form.get('description', '').strip()
         building = request.form.get('building', '').strip()
         floor = request.form.get('floor', '').strip() or None
         room = request.form.get('room', '').strip()
 
-        is_valid, error_msg = validate_complaint_input(category, description, building, floor, room)
+        is_valid, error_msg = validate_complaint_input(category, description, building, floor, room, priority)
         if not is_valid:
             flash(error_msg, 'danger')
             return render_template(
                 'complaints/new.html',
                 categories=sorted(ALLOWED_CATEGORIES),
+                priorities=sorted(ALLOWED_PRIORITIES),
                 form_data=request.form,
                 active_page='new_complaint'
             )
@@ -136,11 +138,11 @@ def new_complaint():
         cursor = db.cursor(dictionary=True)
 
         try:
-            # 1. Insert complaint record without ticket number
+            # 1. Insert complaint record with user-selected priority
             cursor.execute("""
                 INSERT INTO complaints (user_id, category, description, building, floor, room, priority, status)
-                VALUES (%s, %s, %s, %s, %s, %s, 'Medium', 'Pending')
-            """, (session['user_id'], category, description, building, floor, room))
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'Pending')
+            """, (session['user_id'], category, description, building, floor, room, priority))
 
             complaint_id = cursor.lastrowid
             year = datetime.now().year
@@ -167,18 +169,22 @@ def new_complaint():
         finally:
             cursor.close()
 
-    # Support QR-code instant prefilling (PRD Section 15 Enhancement)
+    # Support QR-code instant prefilling with sanitization and validation
+    raw_cat = request.args.get('category', '').strip()
+    safe_cat = raw_cat if raw_cat in ALLOWED_CATEGORIES else ''
+
     prefill = {
-        'category': request.args.get('category', '').strip(),
-        'building': request.args.get('building', '').strip(),
-        'floor': request.args.get('floor', '').strip(),
-        'room': request.args.get('room', '').strip(),
-        'description': request.args.get('description', '').strip()
+        'category': safe_cat,
+        'building': request.args.get('building', '').strip()[:100],
+        'floor': request.args.get('floor', '').strip()[:20],
+        'room': request.args.get('room', '').strip()[:50],
+        'description': request.args.get('description', '').strip()[:500]
     }
 
     return render_template(
         'complaints/new.html',
         categories=sorted(ALLOWED_CATEGORIES),
+        priorities=sorted(ALLOWED_PRIORITIES),
         form_data=prefill if any(prefill.values()) else None,
         is_qr_prefilled=bool(prefill.get('building') and prefill.get('room')),
         active_page='new_complaint'
@@ -232,40 +238,45 @@ def complaint_details(complaint_id):
 
 
 @student_bp.route('/complaints/track')
-@login_required
 def track_complaint():
+    """
+    Public tracking view: allows any campus member to check status via ticket reference
+    without exposing submitter personal information or internal contact details.
+    """
     ticket = request.args.get('ticket', '').strip().upper()
     complaint = None
+    is_owner = False
 
     if ticket:
         db = get_db()
         cursor = db.cursor(dictionary=True)
+        # Select operational details without exposing submitter PII (email, phone, etc.)
         cursor.execute("""
-            SELECT c.*, d.department_name, s.name AS staff_name
+            SELECT c.complaint_id, c.ticket_number, c.category, c.description,
+                   c.building, c.floor, c.room, c.priority, c.status,
+                   c.resolution_remarks, c.resolution_image, c.created_at, c.updated_at,
+                   c.user_id,
+                   d.department_name, s.name AS staff_name
             FROM complaints c
             LEFT JOIN departments d ON c.department_id = d.department_id
             LEFT JOIN users s ON c.assigned_staff_id = s.user_id
             WHERE c.ticket_number = %s
         """, (ticket,))
         complaint = cursor.fetchone()
+        cursor.close()
 
         if complaint:
-            # Enforce ownership check: student/faculty can only track their own
-            role = session['role']
-            if role in ('student', 'faculty') and complaint['user_id'] != session['user_id']:
-                flash('Access restricted: You may only track tickets submitted by your account.', 'danger')
-                complaint = None
-            elif role == 'staff' and complaint['assigned_staff_id'] != session['user_id']:
-                flash('Access restricted: This complaint is not assigned to your account.', 'danger')
-                complaint = None
+            current_user_id = session.get('user_id')
+            current_role = session.get('role')
+            if current_user_id and (current_role == 'admin' or complaint['user_id'] == current_user_id):
+                is_owner = True
         else:
-            flash(f"No complaint ticket found matching '{ticket}'.", 'warning')
-
-        cursor.close()
+            flash(f"No complaint record found matching ticket reference '{ticket}'.", 'warning')
 
     return render_template(
         'complaints/track.html',
         complaint=complaint,
+        is_owner=is_owner,
         searched_ticket=ticket,
         active_page='track_complaint'
     )
