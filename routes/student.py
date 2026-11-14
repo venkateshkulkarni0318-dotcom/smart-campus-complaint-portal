@@ -41,12 +41,24 @@ def student_dashboard():
         LIMIT 10
     """, (user_id,))
     recent_complaints = cursor.fetchall()
+
+    # Fetch latest activity notification for student (PRD Section 15 Enhancement)
+    cursor.execute("""
+        SELECT ticket_number, category, status, resolution_remarks, updated_at
+        FROM complaints
+        WHERE user_id = %s AND status IN ('In Progress', 'Resolved')
+        ORDER BY updated_at DESC, complaint_id DESC
+        LIMIT 1
+    """, (user_id,))
+    latest_update = cursor.fetchone()
+
     cursor.close()
 
     return render_template(
         'student/dashboard.html',
         stats=stats,
         complaints=recent_complaints,
+        latest_update=latest_update,
         active_page='student_dashboard'
     )
 
@@ -78,12 +90,24 @@ def faculty_dashboard():
         LIMIT 10
     """, (user_id,))
     recent_complaints = cursor.fetchall()
+
+    # Fetch latest activity notification for faculty (PRD Section 15 Enhancement)
+    cursor.execute("""
+        SELECT ticket_number, category, status, resolution_remarks, updated_at
+        FROM complaints
+        WHERE user_id = %s AND status IN ('In Progress', 'Resolved')
+        ORDER BY updated_at DESC, complaint_id DESC
+        LIMIT 1
+    """, (user_id,))
+    latest_update = cursor.fetchone()
+
     cursor.close()
 
     return render_template(
         'student/faculty_dashboard.html',
         stats=stats,
         complaints=recent_complaints,
+        latest_update=latest_update,
         active_page='faculty_dashboard'
     )
 
@@ -143,9 +167,20 @@ def new_complaint():
         finally:
             cursor.close()
 
+    # Support QR-code instant prefilling (PRD Section 15 Enhancement)
+    prefill = {
+        'category': request.args.get('category', '').strip(),
+        'building': request.args.get('building', '').strip(),
+        'floor': request.args.get('floor', '').strip(),
+        'room': request.args.get('room', '').strip(),
+        'description': request.args.get('description', '').strip()
+    }
+
     return render_template(
         'complaints/new.html',
         categories=sorted(ALLOWED_CATEGORIES),
+        form_data=prefill if any(prefill.values()) else None,
+        is_qr_prefilled=bool(prefill.get('building') and prefill.get('room')),
         active_page='new_complaint'
     )
 

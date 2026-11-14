@@ -521,3 +521,22 @@ body {
   }
 }
 
+/* Print Optimization (PRD Section 15 Enhancement) */
+@media print {
+  .sidebar, .topbar, .btn, .flash-container, .btn-close {
+    display: none !important;
+  }
+  .main-wrapper {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .page-content {
+    padding: 0 !important;
+  }
+  .card {
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+}
+

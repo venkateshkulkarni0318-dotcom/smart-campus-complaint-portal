@@ -20,6 +20,31 @@
       </div>
 
       <div class="card-body p-4">
+        {% if is_qr_prefilled %}
+          <div class="alert alert-success d-flex align-items-center gap-2 mb-4 py-2">
+            <i class="bi bi-qr-code-scan fs-4 text-success"></i>
+            <div>
+              <strong>QR Code Scanned Successfully!</strong>
+              <div class="small">Location automatically prefilled for <strong>{{ form_data.building }} — {{ form_data.room }}</strong>.</div>
+            </div>
+          </div>
+        {% else %}
+          <div class="d-flex align-items-center justify-content-between p-2 mb-3 bg-light rounded small">
+            <span class="text-muted"><i class="bi bi-qr-code me-1"></i>Simulate QR Code Scan:</span>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('student.new_complaint', building='Main Library', floor='1st Floor', room='Reading Hall A', category='Classroom Equipment') }}" class="btn btn-outline-secondary btn-xs py-0" style="font-size: 0.75rem;">
+                Library QR
+              </a>
+              <a href="{{ url_for('student.new_complaint', building='Science Block B', floor='3rd Floor', room='Physics Lab 304', category='Electrical') }}" class="btn btn-outline-secondary btn-xs py-0" style="font-size: 0.75rem;">
+                Physics Lab QR
+              </a>
+              <a href="{{ url_for('student.new_complaint', building='Hostel Block 1', floor='Ground', room='Common Washroom', category='Plumbing') }}" class="btn btn-outline-secondary btn-xs py-0" style="font-size: 0.75rem;">
+                Hostel QR
+              </a>
+            </div>
+          </div>
+        {% endif %}
+
         <form method="POST" action="{{ url_for('student.new_complaint') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

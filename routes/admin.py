@@ -63,6 +63,31 @@ def dashboard():
         LIMIT 8
     """)
     recent_complaints = cursor.fetchall()
+
+    # 5. Department Performance & Average Resolution Turnaround Time (PRD Section 15)
+    cursor.execute("""
+        SELECT
+            d.department_id,
+            d.department_name,
+            COUNT(c.complaint_id) AS total_cases,
+            SUM(CASE WHEN c.status = 'Resolved' THEN 1 ELSE 0 END) AS resolved_cases,
+            SUM(CASE WHEN c.status = 'In Progress' THEN 1 ELSE 0 END) AS active_cases,
+            ROUND(AVG(CASE WHEN c.status = 'Resolved' THEN TIMESTAMPDIFF(MINUTE, c.created_at, c.updated_at) / 60.0 ELSE NULL END), 1) AS avg_hours
+        FROM departments d
+        LEFT JOIN complaints c ON d.department_id = c.department_id
+        GROUP BY d.department_id, d.department_name
+        ORDER BY total_cases DESC
+    """)
+    dept_performance = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT ROUND(AVG(TIMESTAMPDIFF(MINUTE, created_at, updated_at) / 60.0), 1) AS overall_avg_hours
+        FROM complaints
+        WHERE status = 'Resolved'
+    """)
+    res_avg = cursor.fetchone()
+    overall_avg_hours = res_avg['overall_avg_hours'] if res_avg and res_avg['overall_avg_hours'] is not None else 0.0
+
     cursor.close()
 
     return render_template(
@@ -71,6 +96,8 @@ def dashboard():
         category_counts=category_counts,
         status_counts=status_counts,
         complaints=recent_complaints,
+        dept_performance=dept_performance,
+        overall_avg_hours=overall_avg_hours,
         active_page='admin_dashboard'
     )
 

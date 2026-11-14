@@ -79,7 +79,83 @@
   </div>
 </div>
 
-<!-- Recent Campus Incidents Table -->
+<!-- Department Performance & Resolution Efficiency (PRD Section 15 Enhancement) -->
+<div class="card shadow-sm border-0 mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
+    <div>
+      <h6 class="mb-0 fw-bold text-dark">
+        <i class="bi bi-speedometer text-primary me-2"></i>Department Operations & Resolution Analytics
+      </h6>
+      <small class="text-muted">Turnaround speed and completion efficiency across facility units</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+        <i class="bi bi-lightning-charge-fill me-1"></i>Campus Avg Turnaround: <strong>{{ overall_avg_hours }} hrs</strong>
+      </span>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-custom table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Department Unit</th>
+            <th class="text-center">Total Workload</th>
+            <th class="text-center">Active Repairs</th>
+            <th class="text-center">Resolved Cases</th>
+            <th>Resolution Rate</th>
+            <th class="text-end">Avg Turnaround</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dept_performance %}
+            {% set rate = ((d.resolved_cases / d.total_cases * 100)|round|int) if d.total_cases > 0 else 0 %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle p-2 bg-primary-subtle text-primary" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">
+                    <i class="bi bi-building"></i>
+                  </div>
+                  <span class="fw-bold text-dark">{{ d.department_name }}</span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-light text-dark border">{{ d.total_cases }}</span>
+              </td>
+              <td class="text-center">
+                {% if d.active_cases > 0 %}
+                  <span class="badge bg-info-subtle text-info fw-semibold">{{ d.active_cases }}</span>
+                {% else %}
+                  <span class="text-muted small">0</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-success-subtle text-success fw-semibold">{{ d.resolved_cases }}</span>
+              </td>
+              <td style="min-width: 140px;">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ rate }}%;" aria-valuenow="{{ rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                  <small class="fw-bold text-dark">{{ rate }}%</small>
+                </div>
+              </td>
+              <td class="text-end">
+                {% if d.avg_hours is not none and d.avg_hours > 0 %}
+                  <span class="fw-semibold text-primary">{{ d.avg_hours }} hrs</span>
+                {% elif d.resolved_cases > 0 %}
+                  <span class="fw-semibold text-success">&lt; 0.1 hrs</span>
+                {% else %}
+                  <span class="text-muted small fst-italic">Pending resolutions</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <div class="card shadow-sm border-0 mb-4">
   <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
     <h6 class="mb-0 fw-bold text-dark">

@@ -135,3 +135,18 @@ All passwords are encrypted with `pbkdf2:sha256` password hashes.
 4. **Resolve**: As technician, click "Mark Resolved" $\to$ Enter mandatory resolution remarks ("Replaced capacitor on ceiling fan") $\to$ Status transitions to `Resolved`.
 5. **Verify**: Log back in as student $\to$ Track ticket $\to$ Verify updated `Resolved` status, technician details, and resolution remarks on the live audit timeline.
 
+---
+
+## 7. Optional Enhancements Implemented (PRD Section 15)
+
+1. **Department Analytics & Resolution Turnaround**:
+   - Live analytics on Admin Dashboard computing total workload, active repairs, completed cases, and % resolution efficiency.
+   - Computes real average turnaround time in hours from MySQL database timestamps.
+2. **QR-Based Quick Complaint Reporting**:
+   - Supports URL query parameters (`/complaints/new?building=...&room=...&category=...`).
+   - Automatically pre-fills facility and location fields when students scan a campus room or equipment QR sticker.
+3. **In-App Activity & Resolution Alerts**:
+   - Prominent notification alert rendered on Student & Faculty dashboards immediately notifying them when a ticket is updated or marked resolved.
+4. **Printable / Exportable Ticket View**:
+   - Print optimization (`@media print`) on complaint details page formatting clean A4 records while stripping navigation and action bars.
+
