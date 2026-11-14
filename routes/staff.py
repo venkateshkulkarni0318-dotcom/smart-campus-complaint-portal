@@ -133,3 +133,4 @@ def update_status(complaint_id):
         cursor.close()
 
     return redirect(url_for('staff.dashboard'))
+

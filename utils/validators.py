@@ -87,3 +87,4 @@ def validate_assignment(cursor, department_id, staff_id):
         return False, f"Staff member '{staff['name']}' does not belong to the '{dept['department_name']}' department.", None
 
     return True, None, staff
+

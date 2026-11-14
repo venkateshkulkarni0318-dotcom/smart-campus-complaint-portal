@@ -128,3 +128,4 @@ def logout():
     session.clear()
     flash('You have been securely signed out.', 'info')
     return redirect(url_for('auth.login'))
+

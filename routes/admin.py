@@ -241,3 +241,4 @@ def update_priority(complaint_id):
         cursor.close()
 
     return redirect(url_for('admin.complaints'))
+

@@ -93,3 +93,4 @@ CREATE TABLE IF NOT EXISTS complaint_history (
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE CASCADE,
   INDEX idx_hist_complaint (complaint_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

@@ -56,3 +56,4 @@ def test_db_connection():
         return True, "Database connection successful!"
     except mysql.connector.Error as err:
         return False, str(err)
+
