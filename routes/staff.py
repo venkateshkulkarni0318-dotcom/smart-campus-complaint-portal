@@ -4,6 +4,7 @@ Maintenance staff routes: task dashboard and status lifecycle transitions.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort
+from werkzeug.exceptions import HTTPException
 from utils.auth import role_required
 from utils.db import get_db
 from utils.validators import ALLOWED_TRANSITIONS
@@ -126,6 +127,8 @@ def update_status(complaint_id):
         db.commit()
         flash(f"Status for ticket {complaint['ticket_number']} updated to {new_status}!", 'success')
 
+    except HTTPException:
+        raise
     except Exception as err:
         db.rollback()
         flash(f"Failed to update task status: {str(err)}", 'danger')

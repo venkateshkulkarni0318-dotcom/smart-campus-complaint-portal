@@ -132,8 +132,27 @@
                   <small class="text-muted d-block">Room {{ c.room }}</small>
                 </td>
                 <td>
-                  <!-- Interactive Priority Modal Trigger or Badge -->
-                  {{ priority_badge(c.priority) }}
+                  <!-- Quick Priority Change Dropdown -->
+                  <div class="dropdown">
+                    <button class="btn btn-link p-0 text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Click to Change Priority">
+                      {{ priority_badge(c.priority) }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                      <li><h6 class="dropdown-header small text-muted text-uppercase">Set Priority</h6></li>
+                      {% for prio in ['Low', 'Medium', 'High'] %}
+                        <li>
+                          <form method="POST" action="{{ url_for('admin.update_priority', complaint_id=c.complaint_id) }}" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="priority" value="{{ prio }}">
+                            <button type="submit" class="dropdown-item d-flex align-items-center justify-content-between small py-1 {% if c.priority == prio %}fw-bold text-primary bg-light{% endif %}">
+                              <span>{{ prio }}</span>
+                              {% if c.priority == prio %}<i class="bi bi-check-lg text-primary"></i>{% endif %}
+                            </button>
+                          </form>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
                 </td>
                 <td>
                   {{ status_badge(c.status) }}

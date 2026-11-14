@@ -10,7 +10,8 @@ from utils.validators import (
     validate_assignment,
     ALLOWED_CATEGORIES,
     ALLOWED_PRIORITIES,
-    ALLOWED_STATUSES
+    ALLOWED_STATUSES,
+    ALLOWED_TRANSITIONS
 )
 
 admin_bp = Blueprint('admin', __name__)
@@ -170,6 +171,11 @@ def assign_complaint(complaint_id):
             flash('Complaint not found.', 'danger')
             return redirect(url_for('admin.complaints'))
 
+        # State transition validation: Admin can only assign Pending or Assigned complaints
+        if (complaint['status'], 'admin') not in ALLOWED_TRANSITIONS:
+            flash(f"Complaints in '{complaint['status']}' state cannot be assigned or reassigned.", 'danger')
+            return redirect(url_for('admin.complaints'))
+
         # 3-Layer Validation (dept exists, staff exists + is staff, staff in dept)
         is_valid, err_msg, staff_user = validate_assignment(cursor, department_id, staff_id)
         if not is_valid:
@@ -229,11 +235,31 @@ def update_priority(complaint_id):
     db = get_db()
     cursor = db.cursor(dictionary=True)
     try:
+        cursor.execute("SELECT * FROM complaints WHERE complaint_id = %s", (complaint_id,))
+        complaint = cursor.fetchone()
+        if not complaint:
+            flash('Complaint not found.', 'danger')
+            return redirect(url_for('admin.complaints'))
+
+        old_priority = complaint['priority']
         cursor.execute("""
             UPDATE complaints SET priority = %s, updated_at = NOW() WHERE complaint_id = %s
         """, (new_priority, complaint_id))
+
+        # Insert audit history for priority adjustment
+        cursor.execute("""
+            INSERT INTO complaint_history (complaint_id, old_status, new_status, updated_by, remarks)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            complaint_id,
+            complaint['status'],
+            complaint['status'],
+            session['user_id'],
+            f"Priority changed from {old_priority} to {new_priority} by Administrator"
+        ))
+
         db.commit()
-        flash('Priority updated successfully.', 'success')
+        flash(f"Priority for ticket {complaint['ticket_number']} updated from {old_priority} to {new_priority}.", 'success')
     except Exception as err:
         db.rollback()
         flash(f"Error updating priority: {str(err)}", 'danger')
