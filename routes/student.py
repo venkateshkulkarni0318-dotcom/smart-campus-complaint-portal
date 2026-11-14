@@ -19,11 +19,11 @@ def student_dashboard():
     db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    # Calculate real-time stats for the authenticated student
+    # Calculate real-time stats for the authenticated student (Pending includes Assigned awaiting start)
     cursor.execute("""
         SELECT
             COUNT(*) AS total,
-            SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN status IN ('Pending', 'Assigned') THEN 1 ELSE 0 END) AS pending,
             SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress,
             SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved
         FROM complaints
@@ -61,7 +61,7 @@ def faculty_dashboard():
     cursor.execute("""
         SELECT
             COUNT(*) AS total,
-            SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) AS pending,
+            SUM(CASE WHEN status IN ('Pending', 'Assigned') THEN 1 ELSE 0 END) AS pending,
             SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) AS in_progress,
             SUM(CASE WHEN status = 'Resolved' THEN 1 ELSE 0 END) AS resolved
         FROM complaints
