@@ -3,8 +3,11 @@ routes/staff.py
 Maintenance staff routes: task dashboard and status lifecycle transitions.
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort
+import os
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, abort, current_app
 from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 from utils.auth import role_required
 from utils.db import get_db
 from utils.validators import ALLOWED_TRANSITIONS
@@ -98,13 +101,35 @@ def update_status(complaint_id):
             flash('Resolution remarks are required when marking a complaint as Resolved.', 'danger')
             return redirect(url_for('staff.dashboard'))
 
+        # Handle Resolution Evidence Photo Upload (PRD Section 15 Enhancement)
+        evidence_filename = None
+        if new_status == 'Resolved' and 'evidence_image' in request.files:
+            file = request.files['evidence_image']
+            if file and file.filename:
+                ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+                allowed = current_app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'webp'})
+                if ext in allowed:
+                    timestamp = int(datetime.now().timestamp())
+                    evidence_filename = f"evidence_{complaint_id}_{timestamp}.{ext}"
+                    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], evidence_filename)
+                    file.save(upload_path)
+                else:
+                    flash('Invalid image format. Allowed formats: PNG, JPG, JPEG, WEBP.', 'warning')
+
         # Update complaint record
         if new_status == 'Resolved':
-            cursor.execute("""
-                UPDATE complaints
-                SET status = %s, resolution_remarks = %s, updated_at = NOW()
-                WHERE complaint_id = %s
-            """, (new_status, remarks, complaint_id))
+            if evidence_filename:
+                cursor.execute("""
+                    UPDATE complaints
+                    SET status = %s, resolution_remarks = %s, resolution_image = %s, updated_at = NOW()
+                    WHERE complaint_id = %s
+                """, (new_status, remarks, evidence_filename, complaint_id))
+            else:
+                cursor.execute("""
+                    UPDATE complaints
+                    SET status = %s, resolution_remarks = %s, updated_at = NOW()
+                    WHERE complaint_id = %s
+                """, (new_status, remarks, complaint_id))
         else:
             cursor.execute("""
                 UPDATE complaints

@@ -18,3 +18,4 @@ echo Press Ctrl+C in this console window to stop the server.
 echo.
 .\venv\Scripts\python.exe app.py
 pause
+

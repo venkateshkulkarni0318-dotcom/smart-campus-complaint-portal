@@ -31,3 +31,8 @@ class Config:
     # Debug mode
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
 
+    # File Uploads (Resolution Evidence - PRD Section 15)
+    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static', 'uploads')
+    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB max upload
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+

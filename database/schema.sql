@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS complaints (
   department_id       INT           DEFAULT NULL,
   assigned_staff_id   INT           DEFAULT NULL,
   resolution_remarks  TEXT          DEFAULT NULL,
+  resolution_image    VARCHAR(255)  DEFAULT NULL,
   created_at          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
   updated_at          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
                       ON UPDATE CURRENT_TIMESTAMP,

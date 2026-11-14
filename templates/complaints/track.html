@@ -83,12 +83,27 @@
             </div>
           </div>
 
-          {% if complaint.resolution_remarks %}
-            <div class="alert alert-success d-flex align-items-start gap-2 mb-4">
+          {% if complaint.resolution_remarks or complaint.resolution_image %}
+            <div class="alert alert-success d-flex align-items-start gap-3 mb-4">
               <i class="bi bi-check-circle-fill fs-5 mt-1"></i>
-              <div>
-                <strong class="d-block">Resolution Remarks:</strong>
-                <span>{{ complaint.resolution_remarks }}</span>
+              <div class="w-100">
+                <strong class="d-block mb-1">Resolution Summary:</strong>
+                {% if complaint.resolution_remarks %}
+                  <p class="mb-2 small">{{ complaint.resolution_remarks }}</p>
+                {% endif %}
+                {% if complaint.resolution_image %}
+                  <div class="mt-2 pt-2 border-top border-success-subtle">
+                    <span class="small fw-semibold text-success-emphasis d-block mb-2">
+                      <i class="bi bi-camera me-1"></i>Technician Resolution Photo:
+                    </span>
+                    <a href="{{ url_for('static', filename='uploads/' ~ complaint.resolution_image) }}" target="_blank">
+                      <img src="{{ url_for('static', filename='uploads/' ~ complaint.resolution_image) }}" 
+                           alt="Resolution Photo" 
+                           class="img-thumbnail rounded shadow-sm" 
+                           style="max-height: 180px; object-fit: cover;">
+                    </a>
+                  </div>
+                {% endif %}
               </div>
             </div>
           {% endif %}

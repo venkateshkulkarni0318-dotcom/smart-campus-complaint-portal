@@ -88,17 +88,20 @@ Follow this sequence during your hackathon presentation or evaluator walkthrough
      - `Pending` (Student filed incident)
      - `Assigned` (Admin assigned to Kiran Rao)
      - `In Progress` (Technician started work)
-     - `Resolved` (Technician completed repairs with official remarks)
-5. Click the **"Print / Save Record"** button to show clean A4 print preview.
+     - `Resolved` (Technician completed repairs with official remarks and optional photographic evidence)
+5. In the resolve modal, enter remarks and attach an evidence photo (PNG/JPG/WEBP) to demonstrate proof of completed work.
+6. View the ticket in both the **Student Details View** (`/complaints/<id>`) and **Public Ticket Tracker** (`/complaints/track`) to showcase the verified photographic evidence thumbnail.
+7. Click the **"Print / Save Record"** button to show clean A4 print preview.
 
 ---
 
 ## 3. Key Technical & Security Highlights for Evaluators
 
-When judges ask about architecture or security, highlight these 6 key engineering strengths:
+When judges ask about architecture or security, highlight these 7 key engineering strengths:
 
 | Feature | Engineering Implementation | Why It Matters |
 |---|---|---|
+| **Resolution Evidence Upload** | Server-side MIME/extension verification, unique timestamped file generation, and storage under `static/uploads/` | Guarantees authentic visual proof of maintenance repairs across details and tracker views |
 | **3-Layer Staff Assignment** | Server-side validation checking dept existence, staff role, and staff department membership (`users.department_id = department_id`) | Prevents malicious POST requests from assigning arbitrary users or wrong technicians |
 | **Concurrency-Safe Tickets** | `CMP-YYYY-NNNN` generated using MySQL auto-increment ID within a transaction | Eliminates race-condition collisions during simultaneous submissions |
 | **Controlled State Machine** | Sequential transition matrix: `Pending` $\to$ `Assigned` $\to$ `In Progress` $\to$ `Resolved` | Rejects arbitrary browser status tampering and ensures business workflow integrity |
@@ -110,13 +113,13 @@ When judges ask about architecture or security, highlight these 6 key engineerin
 
 ## 4. Test Suite Execution Proof
 
-Run all 37 automated tests across the project:
+Run all 38 automated tests across the project:
 ```bash
 python -m unittest discover -s tests
 ```
 Output:
 ```text
-Ran 37 tests in 15.909s
+Ran 38 tests in 16.673s
 
 OK (100% Passing - 0 failures, 0 errors)
 - Phase 1 (Database Connection, Schema & Seed): 6 tests
@@ -124,6 +127,7 @@ OK (100% Passing - 0 failures, 0 errors)
 - Phase 3 (Admin, Staff & State Machine):       13 tests
 - Phase 4 (Full E2E Demo Lifecycle):            1 test
 - Phase 5 (PRD Section 15 Enhancements):        4 tests
+- Phase 7 (Evidence Photo Upload & Tracking):   1 test
 ```
 
 ---
@@ -140,3 +144,4 @@ OK (100% Passing - 0 failures, 0 errors)
 | **Staff (IT Equipment)** | `it.staff@campus.edu` | `Staff@2026!` |
 | **Student** | `student@campus.edu` | `Student@2026!` |
 | **Faculty** | `faculty@campus.edu` | `Faculty@2026!` |
+

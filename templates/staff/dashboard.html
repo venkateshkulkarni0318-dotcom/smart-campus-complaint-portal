@@ -150,7 +150,7 @@
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="resolveForm" method="POST" action="">
+      <form id="resolveForm" method="POST" action="" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="new_status" value="Resolved">
 
@@ -168,6 +168,17 @@
                       required minlength="5"></textarea>
             <div class="form-text text-muted small">
               This summary will be visible to the student/faculty submitter and campus administration.
+            </div>
+          </div>
+
+          <!-- Resolution Evidence Photo (PRD Section 15 Enhancement) -->
+          <div class="mb-3">
+            <label for="evidenceImage" class="form-label fw-semibold">
+              <i class="bi bi-camera-fill text-primary me-1"></i>Attach Work Evidence Photo <span class="text-muted small fw-normal">(Optional)</span>
+            </label>
+            <input type="file" class="form-control" id="evidenceImage" name="evidence_image" accept="image/*">
+            <div class="form-text text-muted small">
+              Attach an on-site photo demonstrating completed repair work (PNG, JPG, WEBP).
             </div>
           </div>
         </div>
