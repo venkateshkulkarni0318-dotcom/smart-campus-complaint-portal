@@ -134,3 +134,4 @@ All passwords are encrypted with `pbkdf2:sha256` password hashes.
 3. **In Progress**: Log in as `electrical.staff@campus.edu` $\to$ See assigned task in technician queue $\to$ Click "Start Work" $\to$ Status transitions to `In Progress`.
 4. **Resolve**: As technician, click "Mark Resolved" $\to$ Enter mandatory resolution remarks ("Replaced capacitor on ceiling fan") $\to$ Status transitions to `Resolved`.
 5. **Verify**: Log back in as student $\to$ Track ticket $\to$ Verify updated `Resolved` status, technician details, and resolution remarks on the live audit timeline.
+
